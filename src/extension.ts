@@ -22,14 +22,16 @@ import {
   TransportKind,
 } from 'vscode-languageclient';
 
-import { commonNotifications } from '../server/helpers';
-
 enum Status {
   init = 1,
   ok = 2,
   error = 3,
 }
 const extName = 'graphqlForVSCode';
+const GQL_LANGUAGE_SERVER_CLI_PATH = require.resolve(
+  '@playlyfe/gql-language-server/lib/bin/cli',
+);
+
 const statusBarText = 'GQL';
 const statusBarUIElements = {
   [Status.init]: {
@@ -60,31 +62,48 @@ const statusBarActivationLanguageIds = [
 ];
 
 export function activate(context: ExtensionContext) {
-
-  // The server is implemented in node
-  const serverModule = context.asAbsolutePath(path.join('out', 'server', 'server.js'));
   // The debug options for the server
   const debugOptions = { execArgv: ['--nolazy', '--debug=6004'] };
+
+  const configuration = workspace.getConfiguration(extName);
 
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   const serverOptions: ServerOptions = {
-    run : { module: serverModule, transport: TransportKind.ipc },
-    debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions },
+    run: {
+      module: GQL_LANGUAGE_SERVER_CLI_PATH,
+      transport: TransportKind.ipc,
+      args: [
+        configuration.has('watchman')
+          ? `--watchman=${configuration.get('watchman')}`
+          : null,
+        configuration.has('autoDownloadGQL')
+          ? `--auto-download-gql=${configuration.get('autoDownloadGQL')}`
+          : null,
+      ].filter(Boolean),
+    },
+    debug: {
+      module: GQL_LANGUAGE_SERVER_CLI_PATH,
+      transport: TransportKind.ipc,
+      options: debugOptions,
+    },
   };
 
   // Options to control the language client
   const clientOptions: LanguageClientOptions = {
     diagnosticCollectionName: 'graphql',
     initializationOptions: () => {
-      const configuration = workspace.getConfiguration(extName);
       return {
-        nodePath: configuration ? configuration.get('nodePath', undefined) : undefined,
+        nodePath: configuration
+          ? configuration.get('nodePath', undefined)
+          : undefined,
         debug: configuration ? configuration.get('debug', false) : false,
       };
     },
-    initializationFailedHandler: (error) => {
-      window.showErrorMessage("VSCode for Graphql couldn't start. See output channel for more details.");
+    initializationFailedHandler: error => {
+      window.showErrorMessage(
+        "VSCode for Graphql couldn't start. See output channel for more details.",
+      );
       client.error('Server initialization failed:', error.message);
       client.outputChannel.show(true);
       return false;
@@ -92,38 +111,39 @@ export function activate(context: ExtensionContext) {
   };
 
   // Create the language client and start the client.
-  const client = new LanguageClient('Graphql For VSCode', serverOptions, clientOptions);
+  const client = new LanguageClient(
+    'Graphql For VSCode',
+    serverOptions,
+    clientOptions,
+  );
 
   // Push the disposable to the context's subscriptions so that the
   // client can be deactivated on extension deactivation
   context.subscriptions.push(
     client.start(),
-    commands.registerCommand('graphqlForVSCode.showOutputChannel', () => { client.outputChannel.show(); }),
+    commands.registerCommand('graphqlForVSCode.showOutputChannel', () => {
+      client.outputChannel.show();
+    }),
     statusBarItem,
   );
 
+  initializeStatusBar(context, client);
+
   client.onReady().then(() => {
-    initializeStatusBar(context, client);
-  });
-}
-
-const serverInitialized = new NotificationType(commonNotifications.serverInitialized);
-const serverExited = new NotificationType(commonNotifications.serverExited);
-
-function initializeStatusBar(context, client) {
-  extensionStatus = Status.init;
-  client.onNotification(serverInitialized, (params) => {
     extensionStatus = Status.ok;
     serverRunning = true;
     updateStatusBar(window.activeTextEditor);
-  });
-  client.onNotification(serverExited, (params) => {
+  }, () => {
     extensionStatus = Status.error;
     serverRunning = false;
     updateStatusBar(window.activeTextEditor);
   });
+}
 
-  client.onDidChangeState((event) => {
+function initializeStatusBar(context, client) {
+  extensionStatus = Status.init;
+
+  client.onDidChangeState(event => {
     if (event.newState === ClientState.Running) {
       extensionStatus = Status.ok;
       serverRunning = true;
@@ -134,6 +154,7 @@ function initializeStatusBar(context, client) {
     }
     updateStatusBar(window.activeTextEditor);
   });
+
   updateStatusBar(window.activeTextEditor);
 
   window.onDidChangeActiveTextEditor((editor: TextEditor) => {
@@ -150,7 +171,10 @@ function updateStatusBar(editor: TextEditor) {
   statusBarItem.command = 'graphqlForVSCode.showOutputChannel';
   statusBarItem.color = statusUI.color;
 
-  if (editor && statusBarActivationLanguageIds.indexOf(editor.document.languageId) > -1) {
+  if (
+    editor &&
+    statusBarActivationLanguageIds.indexOf(editor.document.languageId) > -1
+  ) {
     statusBarItem.show();
   } else {
     statusBarItem.hide();

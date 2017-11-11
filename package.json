@@ -43,27 +43,35 @@
   "activationEvents": [
     "workspaceContains:.gqlconfig"
   ],
-  "main": "./out/client/extension",
+  "main": "./out/extension",
   "contributes": {
     "configuration": {
       "type": "object",
       "title": "Graphql Configuration",
       "properties": {
         "graphqlForVSCode.nodePath": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string"],
           "default": null,
-          "description": "A path added to NODE_PATH when resolving the @playlyfe/gql module."
+          "description": "A path added to NODE_PATH when resolving the @playlyfe/gql module.",
+          "scope": "resource"
         },
         "graphqlForVSCode.debug": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": "boolean",
           "default": false,
-          "description": "enable debug logs."
+          "description": "enable debug logs.",
+          "scope": "resource"
+        },
+        "graphqlForVSCode.watchman": {
+          "type": "boolean",
+          "default": true,
+          "description": "use watchman if present.",
+          "scope": "window"
+        },
+        "graphqlForVSCode.autoDownloadGQL": {
+          "type": "boolean",
+          "default": true,
+          "description": "auto download @playlyfe/gql if not found in nodePath.",
+          "scope": "resource"
         }
       }
     },
@@ -125,13 +133,10 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "yarn clean && yarn compile-server && yarn compile",
+    "vscode:prepublish": "yarn clean && yarn compile",
     "clean": "rimraf out",
-    "compile-server": "tsc -p src/server",
-    "watch-server": "tsc -watch -p src/server",
-    "compile": "tsc -p src/client",
-    "watch": "tsc -watch -p src/client",
-    "dev": "yarn clean && yarn compile-server && yarn watch",
+    "compile": "tsc -p src",
+    "watch": "tsc -watch -p src",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "semantic-release": "semantic-release pre && vsce publish -p $VS_TOKEN && semantic-release post",
     "commitmsg": "commitlint -e"
@@ -150,10 +155,7 @@
     "vscode": "^1.1.6"
   },
   "dependencies": {
-    "semver": "5.4.1",
-    "vscode-languageclient": "^3.4.5",
-    "vscode-languageserver": "^3.4.3",
-    "vscode-uri": "^1.0.1"
+    "vscode-languageclient": "^3.5.0"
   },
   "galleryBanner": {
     "color": "#2e2348",
