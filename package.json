@@ -9,6 +9,7 @@
     "url": "https://github.com/kumarharsh"
   },
   "keywords": [
+    "multi-root ready",
     "vscode",
     "visual studio code",
     "graphql",
@@ -74,13 +75,7 @@
           "scope": "resource"
         }
       }
-    },
-    "commands": [
-      {
-        "command": "graphqlForVSCode.showOutputChannel",
-        "title": "GraphQL for VSCode: Show Output Channel"
-      }
-    ],
+   },
     "languages": [
       {
         "id": "graphql",
