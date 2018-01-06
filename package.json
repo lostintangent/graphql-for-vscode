@@ -23,7 +23,7 @@
   "contributors": [
     {
       "name": "Mayank Agarwal (@Mayank1791989)",
-      "url": "github.com/Mayank1791989",
+      "url": "https://github.com/Mayank1791989",
       "email": "mayank@playlyfe.com"
     }
   ],
@@ -53,7 +53,7 @@
         "graphqlForVSCode.nodePath": {
           "type": ["string"],
           "default": null,
-          "description": "A path added to NODE_PATH when resolving the @playlyfe/gql module.",
+          "description": "A path added to NODE_PATH when resolving the @playlyfe/gql-language-server module.",
           "scope": "resource"
         },
         "graphqlForVSCode.debug": {
@@ -71,7 +71,7 @@
         "graphqlForVSCode.autoDownloadGQL": {
           "type": "boolean",
           "default": true,
-          "description": "auto download @playlyfe/gql if not found in nodePath.",
+          "description": "auto download @playlyfe/gql-language-server if not found in nodePath.",
           "scope": "resource"
         }
       }
@@ -132,6 +132,7 @@
     "clean": "rimraf out",
     "compile": "tsc -p src",
     "watch": "tsc -watch -p src",
+    "dev": "yarn clean && yarn watch",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "semantic-release": "semantic-release pre && vsce publish -p $VS_TOKEN && semantic-release post",
     "commitmsg": "commitlint -e"
